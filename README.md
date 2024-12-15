@@ -2,6 +2,9 @@
 Code to authenticate and access Schwab API
 Currently only supports individual developer role and Market Data API
 
+See the YouTube video here:
+https://youtu.be/vnXVsJuI6ns
+
 ## Requirements  
 `Python 3.13.0`  
 `pip freeze`  
