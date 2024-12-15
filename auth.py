@@ -29,7 +29,7 @@ def makeRequest(url, payload, verb='post'):
 def getNewToken():
     # copy url to clipboard: user must authenticate via browser with account (not dev) creds
     pyperclip.copy(auth_url)
-    print(f"Authorization URL (copied to clipboard): {auth_url}")
+    print(f"Authorization URL (copied to clipboard): ")
 
     # following authentication, browser will return a url with the code; user must copy it here
     print("Enter returned URL:")
