@@ -1,2 +1,5 @@
 .env
 *.json
+*.pkl
+*.txt
+*.raw

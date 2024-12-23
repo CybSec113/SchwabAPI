@@ -1,4 +1,5 @@
 import requests
+import sys
 import os
 import base64
 import pyperclip
@@ -67,16 +68,21 @@ def getRefreshToken():
         f.write(response.text)
 
 if __name__ == "__main__":
-    print("1 - New token")
-    print("2 - Refresh token")
-    print("3 - Set token timer")
-    command = input("Selection: ")
+    args = sys.argv[1:]
 
-    if command == '1':
+    if len(args) == 0:
+        print("Usage: python auth.py <(N)ew | (R)efresh | (S)et timer>")
+        sys.exit(1)
+
+    if args[0].lower() not in ['n', 'r', 's']:
+        print("Usage: python auth.py <(N)ew | (R)efresh | (S)et timer>")
+        sys.exit(1)
+
+    if args[0].lower() == 'n':
         getNewToken()
-    elif command == '2':
+    elif args[0].lower() == 'r':
         getRefreshToken()
-    elif command == '3':
+    elif args[0].lower() == 's':
         cron = CronTab(user=True)
         cron.remove_all()
         cron.write()
