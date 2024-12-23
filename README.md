@@ -10,7 +10,7 @@ usage: `python auth.py <(N)ew | (R)efresh | (S)et timer>`
 
 **New**: gets a new token, including website authentication  
 **Refresh**: refreshes current token, no website authentication required  
-**Set timer**: creates a `crontab` job reminder to renew token at 2d9 and 59 minutes past the hour (first token may be shorter than 30 minutes, but no harm)  
+**Set timer**: creates a `crontab` job reminder to renew token at 29 and 59 minutes past the hour (first token may be shorter than 30 minutes, but no harm)  
 
 ## option_tickers.py  
 Usage: `python option_tickers.py <(T)o API | (F)rom API> <filename>`  
