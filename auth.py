@@ -1,3 +1,4 @@
+#!/Users/jnn/Documents/Trading/Devel/tosenv/bin/python3
 import requests
 import sys
 import os
@@ -12,6 +13,8 @@ load_dotenv()
 # global parameters
 api_key = os.getenv("SCHWAB_API_KEY")
 api_secret = os.getenv("SCHWAB_API_SECRET")
+tokenfile = os.getenv("SCHWAB_TOKEN_FILE")
+print(tokenfile)
 token_url = "https://api.schwabapi.com/v1/oauth/token"
 auth_url = f"https://api.schwabapi.com/v1/oauth/authorize?client_id={api_key}&redirect_uri=https://127.0.0.1"
 
@@ -49,11 +52,11 @@ def getNewToken():
     # the token POST request
     response = makeRequest(token_url, payload)
     print(response)
-    with open("token.json", "w") as f:
+    with open(tokenfile, "w") as f:
         f.write(response.text)
 
 def getRefreshToken():
-    with open("token.json", "r") as f:
+    with open(tokenfile, "r") as f:
         auth_text = f.read()
     auth_json = json.loads(auth_text)
 
@@ -64,7 +67,7 @@ def getRefreshToken():
 
     response = makeRequest(token_url, payload)
     print(response)
-    with open("token.json", "w") as f:
+    with open(tokenfile, "w") as f:
         f.write(response.text)
 
 if __name__ == "__main__":
@@ -86,6 +89,6 @@ if __name__ == "__main__":
         cron = CronTab(user=True)
         cron.remove_all()
         cron.write()
-        job = cron.new(command="say 'token'")
+        job = cron.new(command="~/Documents/Trading/Devel/auth.py r")
         job.setall('29,59 * * * *')
         cron.write()

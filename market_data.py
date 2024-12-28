@@ -1,9 +1,11 @@
+#!/Users/jnn/Documents/Trading/Devel/tosenv/bin/python3
 import requests
 import sys
 import datetime
 import time
 import json
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import math
 from dateutil.relativedelta import relativedelta
@@ -12,7 +14,7 @@ from decimal import Decimal
 server="https://api.schwabapi.com/marketdata/v1"
 
 def getHeaders():
-    with open("token.json", "r") as f:
+    with open("Data/token.json", "r") as f:
         auth_text = f.read()
     auth_json = json.loads(auth_text)
     bearer_token = auth_json["access_token"]
@@ -38,14 +40,16 @@ def getQuote(filename, symbols):
     print(response)
     quote = json.loads(response.text)
     filename = filename.split('.')[0]
-    with open(f"{filename}.json", "w") as f:
+    with open(f"Data/{filename}.json", "w") as f:
        f.write(response.text)
     f.close()
 
     if security == 'Stocks':
         for ticker in symbols:
-            print(f"{ticker}: {quote[ticker]['quote']['mark']}")
+            mark = quote[ticker]['quote']['mark']
+            print(f"{ticker}: {mark}")
     elif security == 'Options':
+        print(f"Ticker,Exp,Strike,Type,Mark,Close")
         for oticker in symbols:
             ticker = oticker[:6].strip()
             exp = oticker[6:12]
@@ -53,48 +57,52 @@ def getQuote(filename, symbols):
             strike = Decimal(oticker[13:])/1000
             exp = datetime.datetime.strptime(exp, '%y%m%d')
             exp = datetime.datetime.strftime(exp, '%d-%b-%y')
-            print(f"{ticker},{exp},{strike},{otype},{quote[oticker]['quote']['mark']}")
+            mark = quote[oticker]['quote']['mark']
+            close = quote[oticker]['quote']['closePrice']
+            print(f"{ticker},{exp},{strike},{otype},{mark},{close}")
 
 def getHistory(symbol):
-    #start_date=datetime.date(2024,10,1)
-    #end_date=datetime.date(2024,10,31)
-    lookback = 1 #year
-    start_date = datetime.datetime.now() - relativedelta(years=lookback)
-    end_date = datetime.datetime.now()
+    start_date=datetime.date(2023,12,17)
+    end_date=datetime.date(2024,12,20)
+    #start_date = datetime.datetime.now() - relativedelta(years=1)
+    #end_date = datetime.datetime.now()
 
     payload={
         "symbol": f"{symbol}",
         "periodType": "year",
-        "period": lookback,
+        "period": 1,
         "frequencyType": "daily",
-        "frequency": 1,
-        "startDate": int(time.mktime(start_date.timetuple())*1e3),
-        "endDate": int(time.mktime(end_date.timetuple())*1e3),
-        "needExtendedHoursData": False,
-        "needPreviousClose": False,
+        #"frequency": 1,
+        #"startDate": int(time.mktime(start_date.timetuple())*1e3),
+        #"endDate": int(time.mktime(end_date.timetuple())*1e3),
+        #"needExtendedHoursData": False,
+        #"needPreviousClose": False,
     }
 
     # get data from request or from pickle file
     # request: 
-    #response = requests.get(f"{server}/pricehistory", headers=getHeaders(), params=payload)
-    #with open("history.json", "w") as f:
-    #    f.write(response.text)
-    #history = json.loads(response.text)
-    #history_df = pd.json_normalize(history["candles"])
+    response = requests.get(f"{server}/pricehistory", headers=getHeaders(), params=payload)
+    with open("Data/history.json", "w") as f:
+        f.write(response.text)
+    history = json.loads(response.text)
+    history_df = pd.json_normalize(history["candles"])
 
     # pickle file:
-    history_df = pd.read_pickle('history.pkl')
+    #history_df = pd.read_pickle('history.pkl')
 
     # start manipulating data
     history_df['date'] = pd.to_datetime(history_df['datetime'],unit='ms', origin='unix').dt.date
     history_df['pctchng'] = history_df['close'].pct_change()
+    history_df['logpctchng'] = np.log(history_df['close']/history_df['close'].shift(1))
     #history_df.to_pickle('history.pkl')
 
     # standard deviation
-    print(history_df['close'].tail())
-    stddev = history_df['pctchng'].std()
-    print(f"Count: {history_df['pctchng'].count()}")
-    print(f"Annualized StdDev: {stddev*math.sqrt(history_df['pctchng'].count()):.4f}")
+    sd = history_df['pctchng'].std()
+    logsd = history_df['logpctchng'].std()
+    print(history_df[['date','close','logpctchng']].tail())
+    print(f"Count: {history_df['logpctchng'].count()}")
+    print(f"StdDev: {logsd:.6f}")
+    print(f"Annualized StdDev: {logsd*math.sqrt(history_df['logpctchng'].count()-1):.6f}")
 
     # plot
     #history_df.plot(x='date', y='close', kind='line', title='History')
@@ -118,19 +126,22 @@ def getChains(symbol):
         #"optionType": "",                   # not documented
     }
     response = requests.get(f"{server}/chains", headers=getHeaders(), params=payload)
-    with open("chains.json", "w") as f:
+    with open("Data/chains.json", "w") as f:
         f.write(response.text)
     print(json.dumps(response.json(), indent=4))
+
+def getMovers():
+    return
 
 if __name__ == "__main__":
     args = sys.argv[1:]
 
     if len(args) < 2:
-        print("Usage: python market_data.py <(Q)uote | (H)istory | (C)hains> <filename | symbol>")
+        print("Usage: python market_data.py <(Q)uote | (H)istory | (C)hains | (M)overs> <filename | symbol>")
         sys.exit(1)
 
-    if args[0].lower() not in ['q', 'h', 'c']:
-        print("Usage: python market_data.py <(Q)uote | (H)istory | (C)hains> <filename | symbol>")
+    if args[0].lower() not in ['q', 'h', 'c', 'm']:
+        print("Usage: python market_data.py <(Q)uote | (H)istory | (C)hains | (M)overs> <filename | symbol>")
         sys.exit(1)
 
     if args[0].lower() == 'q':
@@ -148,3 +159,7 @@ if __name__ == "__main__":
     if args[0].lower() == 'c':
         print("chains not implemented, yet!")
         #getChains(symbol)
+
+    if args[0].lower() == 'm':
+        print("movers not implemented, yet!")
+        #getMovers()

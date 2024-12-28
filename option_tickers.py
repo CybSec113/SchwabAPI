@@ -1,3 +1,4 @@
+#!/Users/jnn/Documents/Trading/Devel/tosenv/bin/python3
 import sys
 import datetime
 from decimal import Decimal
@@ -18,7 +19,6 @@ def toAPITickers(options):
         oticker = f"{ticker:<6}{exp}{otype[0]}{Decimal(strike):09.3f}"
         oticker = oticker.replace('.', '')
         print(oticker)
-    return 0
 
 def fromAPITickers(otickers):
     for oticker in otickers:
