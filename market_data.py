@@ -24,12 +24,13 @@ def getHeaders():
     }
     return headers
 
-def getQuote(filename, symbols):
+def getQuote(filename, rows):
     # optional payload values: quote, fundamental, extended, reference, regular
     # omitting payload returns full response.
 
-    security = symbols[0]
-    symbols = symbols[1:]
+    security = rows[0]
+    rows = rows[1:]
+    symbols = [row.split(',')[0] for row in rows]
 
     payload = {
         "symbols": symbols,
@@ -49,17 +50,21 @@ def getQuote(filename, symbols):
             mark = quote[ticker]['quote']['mark']
             print(f"{ticker}: {mark}")
     elif security == 'Options':
-        print(f"Ticker,Exp,Strike,Type,Mark,Close")
-        for oticker in symbols:
-            ticker = oticker[:6].strip()
-            exp = oticker[6:12]
-            otype = 'PUT' if oticker[12] == 'P' else 'CALL'
-            strike = Decimal(oticker[13:])/1000
+        #print(f"Ticker,Exp,Strike,Type,Position,Mark,MarkChange,P/L Day")
+        print("Mark")
+        for option in rows:
+            symbol = option.split(',')[0]
+            position = Decimal(option.split(',')[1])
+            ticker = symbol[:6].strip()
+            exp = symbol[6:12]
+            otype = 'PUT' if symbol[12] == 'P' else 'CALL'
+            strike = Decimal(symbol[13:])/1000
             exp = datetime.datetime.strptime(exp, '%y%m%d')
             exp = datetime.datetime.strftime(exp, '%d-%b-%y')
-            mark = quote[oticker]['quote']['mark']
-            close = quote[oticker]['quote']['closePrice']
-            print(f"{ticker},{exp},{strike},{otype},{mark},{close}")
+            mark = quote[symbol]['quote']['mark']
+            markChange = Decimal(quote[symbol]['quote']['markChange'])
+            #print(f"{ticker},{exp},{strike},{otype},{position},{mark:.3f},{markChange:.3f},{plday:.3f}")
+            print(f"{mark:.3f}")
 
 def getHistory(symbol):
     start_date=datetime.date(2023,12,17)
@@ -147,10 +152,10 @@ if __name__ == "__main__":
     if args[0].lower() == 'q':
         filename = args[1]
         with open(filename, 'r') as f:
-            symbols = f.readlines()
-            symbols = [symbol.strip() for symbol in symbols if symbol[0] != '#']
+            rows = f.readlines()
+            rows = [row.strip() for row in rows if row[0] != '#']
         f.close()
-        getQuote(filename, symbols)
+        getQuote(filename, rows)
     
     if args[0].lower() == 'h':
         symbol = args[1]

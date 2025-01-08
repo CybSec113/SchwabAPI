@@ -4,6 +4,7 @@ import datetime
 from decimal import Decimal
 
 def toAPITickers(options):
+    print("Options")
     for option in options:
         if len(option) == 0:
             continue
@@ -14,9 +15,10 @@ def toAPITickers(options):
         day = exp.split('-')[0]
         month = exp.split('-')[1]
         year = exp.split('-')[2]
+        position = option.split('\t')[4]
         exp = datetime.datetime.strptime(exp, '%d-%b-%y')
         exp = datetime.datetime.strftime(exp, '%y%m%d')
-        oticker = f"{ticker:<6}{exp}{otype[0]}{Decimal(strike):09.3f}"
+        oticker = f"{ticker:<6}{exp}{otype[0]}{Decimal(strike):09.3f},{position}"
         oticker = oticker.replace('.', '')
         print(oticker)
 
