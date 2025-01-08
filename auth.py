@@ -1,4 +1,4 @@
-#!/Users/jnn/Documents/Trading/Devel/tosenv/bin/python3
+#!~/Documents/Trading/Devel/tosenv/bin/python3
 import requests
 import sys
 import os
@@ -14,7 +14,6 @@ load_dotenv()
 api_key = os.getenv("SCHWAB_API_KEY")
 api_secret = os.getenv("SCHWAB_API_SECRET")
 tokenfile = os.getenv("SCHWAB_TOKEN_FILE")
-print(tokenfile)
 token_url = "https://api.schwabapi.com/v1/oauth/token"
 auth_url = f"https://api.schwabapi.com/v1/oauth/authorize?client_id={api_key}&redirect_uri=https://127.0.0.1"
 
