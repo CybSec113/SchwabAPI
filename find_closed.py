@@ -1,4 +1,4 @@
-#!~/Documents/Trading/Devel/tosenv/bin/python3
+#!/Users/jnn/Documents/Trading/Devel/tosenv/bin/python3
 import pandas as pd
 
 def find_closed(df):
