@@ -1,4 +1,6 @@
 __pycache__/
+.vscode/
+.DS_Store
 .env
 *.json
 *.pkl
