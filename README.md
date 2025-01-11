@@ -18,7 +18,7 @@ usage: `python auth.py <(N)ew | (R)efresh | (S)et timer>`
 Note: must have the following env variables set in a `.env` file:  
 * **SCHWAB_API_KEY**: provided by Schwab when you complete API registration  
 * **SCHWAB_API_SECRET**: provided by Schwab when you complete API registration  
-* **SCHWAB_TOKEN_FILE**: provide by USER, local directory where `token.json` will be kept  
+* **SCHWAB_TOKEN_FILE**: provided by USER, local directory where `token.json` will be kept  
 
 **New**: gets a new token, including website authentication  
 **Refresh**: refreshes current token, no website authentication required  
