@@ -55,6 +55,11 @@ Find the Realized P/L for each symbol provided in a set of option trades.
 Input is a csv file that contains the trades as provided by tos export function  
 Output is a list of realized p/l for each symbol that can be cut/pasted into excel.  
 
+## bjer-sten.py  
+**Under Development**  
+Implements Bjerksun-Stensland option pricing model.  
+Requires installation of QuantLib and Python QuantLib module.  
+
 ## Requirements  
 `Python 3.13.0`  
 Additional requirements available in 'requirements' (txt) file.
