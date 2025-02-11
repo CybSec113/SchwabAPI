@@ -13,8 +13,12 @@ def closed_realpl(df):
                 position = df.loc[(df['Symbol'] == symbol) & (df['Exp'] == exp) & (df['Strike'] == strike)]['Qty'].sum()
                 # found all positions for this symbol, exp, strike that net to zero (i.e., closed)
                 if position == 0:
-                    #print(df.loc[(df['Symbol'] == symbol) & (df['Exp'] == exp) & (df['Strike'] == strike)])
+                    #print(df.loc[(df['Symbol'] == symbol) & (df['Exp'] == exp) & (df['Strike'] == strike)].to_csv(index=False))
                     realpl = realpl + df.loc[(df['Symbol'] == symbol) & (df['Exp'] == exp) & (df['Strike'] == strike)]['MktVal'].sum()
+                else:
+                    #print(f"Open: {symbol},{exp},{strike},{position}")
+                    pass
+
         print(f"{symbol},{realpl:.2f}")
         realpl = 0
 

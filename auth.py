@@ -86,7 +86,7 @@ if __name__ == "__main__":
         getRefreshToken()
     elif args[0].lower() == 's':
         cron = CronTab(user=True)
-        job = cron.new(command="~/Documents/Trading/Devel/auth.py r")
+        job = cron.new(command="~/Documents/Trading/Devel/auth.py r; say renew")
         job.setall('29,59 * * * *')
         cron.env['MAILTO'] = ''
         cron.write()
