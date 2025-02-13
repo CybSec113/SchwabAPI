@@ -48,7 +48,7 @@ def getQuote(filename, rows):
     if security == 'Stocks':
         for ticker in symbols:
             mark = quote[ticker]['quote']['mark']
-            print(f"{ticker}: {mark}")
+            print(f"{ticker},{mark}")
     elif security == 'Options':
         #print(f"Ticker,Exp,Strike,Type,Position,Mark,MarkChange,P/L Day")
         print("Mark")
