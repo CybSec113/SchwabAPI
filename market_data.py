@@ -40,18 +40,22 @@ def getQuote(filename, rows):
     response = requests.get(f"{server}/quotes", headers=getHeaders(), params=payload)
     print(response)
     quote = json.loads(response.text)
-    filename = filename.split('.')[0]
-    with open(f"Data/{filename}.json", "w") as f:
-       f.write(response.text)
-    f.close()
+    # writes to file to learn json structure
+    #filename = filename.split('.')[0]
+    #with open(f"Data/{filename}.json", "w") as f:
+    #   f.write(response.text)
+    #f.close()
+
+    prem = dict()      # underlying prices for options
+    itmotm = 0.0        # in the money or out of the money
 
     if security == 'Stocks':
+        print("Ticker,Mark")
         for ticker in symbols:
             mark = quote[ticker]['quote']['mark']
             print(f"{ticker},{mark}")
     elif security == 'Options':
-        #print(f"Ticker,Exp,Strike,Type,Position,Mark,MarkChange,P/L Day")
-        print("Mark")
+        print(f"Ticker,Exp,Strike,Type,Position,TradePx,Mark,ITMOTM,Days,PLOpen")
         for option in rows:
             symbol = option.split(',')[0]
             position = Decimal(option.split(',')[1])
@@ -59,12 +63,24 @@ def getQuote(filename, rows):
             exp = symbol[6:12]
             otype = 'PUT' if symbol[12] == 'P' else 'CALL'
             strike = Decimal(symbol[13:])/1000
+            tradepx = Decimal(option.split(',')[2])
+            if ticker not in prem:
+                underpx = quote[symbol]['quote']['underlyingPrice']
+                prem[ticker] = underpx
+            itmotm = prem[ticker] - float(strike) if otype == 'CALL' else float(strike) - prem[ticker]
+            if position < 0:
+                itmotm *= -1
             exp = datetime.datetime.strptime(exp, '%y%m%d')
+            days = (exp - datetime.datetime.now()).days + 1
             exp = datetime.datetime.strftime(exp, '%d-%b-%y')
-            mark = quote[symbol]['quote']['mark']
-            markChange = Decimal(quote[symbol]['quote']['markChange'])
-            #print(f"{ticker},{exp},{strike},{otype},{position},{mark:.3f},{markChange:.3f},{plday:.3f}")
-            print(f"{mark:.3f}")
+            mark = Decimal(quote[symbol]['quote']['mark'])
+            plopen = (position * 100) * (mark - tradepx)
+            print(f"{ticker},{exp},{strike},{otype},{position},{tradepx:.3f},{mark:.3f},{itmotm:.3f},{days},{plopen:.2f}")
+        prem = sorted(prem.items())
+        prem = dict(prem)
+        print("Ticker,Mark")
+        for t in prem:
+            print(f"{t},{prem[t]}")
 
 def getHistory(symbol):
     start_date=datetime.date(2023,12,17)

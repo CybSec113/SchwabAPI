@@ -69,6 +69,14 @@ def getRefreshToken():
     with open(tokenfile, "w") as f:
         f.write(response.text)
 
+def cleanup():
+    if os.path.exists("Data/token.json"):
+        os.remove("Data/token.json")
+    if os.path.exists("Data/account.json"):
+        os.remove("Data/account.json")
+    print("Deleted token and account files.")
+    print("Don't forget to clear crontab!")
+
 if __name__ == "__main__":
     args = sys.argv[1:]
 
@@ -76,14 +84,17 @@ if __name__ == "__main__":
         print("Usage: python auth.py <(N)ew | (R)efresh | (S)et timer>")
         sys.exit(1)
 
-    if args[0].lower() not in ['n', 'r', 's']:
-        print("Usage: python auth.py <(N)ew | (R)efresh | (S)et timer>")
+    if args[0].lower() not in ['n', 'r', 'c', 's']:
+        print("Usage: python auth.py <(N)ew | (R)efresh | (C)leanup | (S)et timer>")
         sys.exit(1)
 
     if args[0].lower() == 'n':
+        cleanup()
         getNewToken()
     elif args[0].lower() == 'r':
         getRefreshToken()
+    elif args[0].lower() == 'c':
+        cleanup()
     elif args[0].lower() == 's':
         cron = CronTab(user=True)
         job = cron.new(command="~/Documents/Trading/Devel/auth.py r; say renew")

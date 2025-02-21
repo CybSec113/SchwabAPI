@@ -16,22 +16,23 @@ def toAPITickers(options):
         month = exp.split('-')[1]
         year = exp.split('-')[2]
         position = option.split('\t')[4]
+        tradepx = option.split('\t')[5]
         exp = datetime.datetime.strptime(exp, '%d-%b-%y')
         exp = datetime.datetime.strftime(exp, '%y%m%d')
-        oticker = f"{ticker:<6}{exp}{otype[0]}{Decimal(strike):09.3f},{position}"
-        oticker = oticker.replace('.', '')
+        oticker = f"{ticker:<6}{exp}{otype[0]}{Decimal(strike):09.3f},{position},{tradepx}"
+        oticker = oticker.replace('.', '', 1)
         print(oticker)
 
-def fromAPITickers(otickers):
-    for oticker in otickers:
-        ticker = oticker[:6].strip()
-        exp = oticker[6:12]
-        otype = 'PUT' if oticker[12] == 'P' else 'CALL'
-        strike = Decimal(oticker[13:])/1000
-        exp = datetime.datetime.strptime(exp, '%y%m%d')
-        exp = datetime.datetime.strftime(exp, '%d-%b-%y')
-        print(f"{ticker},{exp},{strike},{otype}")
-    return 0
+def fromAPITickers(oticker):
+    result = ""
+    ticker = oticker[:6].strip()
+    exp = oticker[6:12]
+    otype = 'PUT' if oticker[12] == 'P' else 'CALL'
+    strike = Decimal(oticker[13:])/1000
+    exp = datetime.datetime.strptime(exp, '%y%m%d')
+    exp = datetime.datetime.strftime(exp, '%d-%b-%y')
+    result = f"{ticker},{exp},{strike},{otype}"
+    return result
 
 if __name__ == '__main__':
     args = sys.argv[1:]
@@ -58,4 +59,5 @@ if __name__ == '__main__':
             otickers = f.readlines()
         f.close()
         otickers = [oticker.strip() for oticker in otickers if oticker[0] != '#']
-        fromAPITickers(otickers)
+        for ticker in otickers:
+            print(fromAPITickers(ticker))

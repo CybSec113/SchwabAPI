@@ -4,8 +4,11 @@ import json
 import os
 import sys
 import datetime
+import pandas as pd
 from dotenv import load_dotenv
 from dateutil.relativedelta import relativedelta
+from market_data import getQuote
+from option_tickers import fromAPITickers
 
 load_dotenv()
 tokenfile = os.getenv("SCHWAB_TOKEN_FILE")
@@ -38,58 +41,103 @@ def getUserPrefs():
         f.write(response.text)
     f.close()
 
-def getAccountBal():
+def getAccountBal(get_posns=True, acct_num=""):
     payload = {
         "fields": "positions",  # optional field, only one value
     }
 
-    response = requests.get(f"{server}/accounts", headers=getHeaders())
-    print(response)
+    if get_posns:
+        response = requests.get(f"{server}/accounts", headers=getHeaders(), params=payload)
+    else:
+        response = requests.get(f"{server}/accounts", headers=getHeaders())
+    print("balance:", response)
     account_json = json.loads(response.text)
-    #print(json.dumps(response.json(), indent=4))
-    with open("Data/balances.json", "w") as f:
-        f.write(response.text)
-    f.close()
+    # helpful to see json format, but not needed to run
+    #with open("Data/balances.json", "w") as f:
+    #    f.write(response.text)
+    #f.close()
 
-    print(f"Account,{account_json[0]['securitiesAccount']['accountNumber']}")
-    print(f"Type,{account_json[0]['securitiesAccount']['type']}")
-    print(f"Cash Bal,{account_json[0]['securitiesAccount']['currentBalances']['cashBalance']}")
-    print(f"Liq Val,{account_json[0]['securitiesAccount']['currentBalances']['liquidationValue']}")
-    print(f"Buying Power,{account_json[0]['securitiesAccount']['currentBalances']['buyingPower']}")
-    print(f"Current Liq Val,{account_json[0]['aggregatedBalance']['currentLiquidationValue']}")
+    for acct in account_json:
+        if get_posns:
+            try:
+                posns = acct['securitiesAccount']['positions']
+            except:
+                print(f"Account {acct['securitiesAccount']['accountNumber']} has no positions.")
+                print("==============================")
+                continue
+            else:
+                print(f"Type,{acct['securitiesAccount']['type']}")
+                print(f"Account,{acct['securitiesAccount']['accountNumber']}")
+                print(f"Liq Val,{acct['securitiesAccount']['currentBalances']['liquidationValue']}")
+                print(f"Current Liq Val,{acct['aggregatedBalance']['currentLiquidationValue']}")
+                print(f"Buying Power,{acct['securitiesAccount']['currentBalances']['buyingPower']}")
+                print(f"Margin Bal,{acct['securitiesAccount']['currentBalances']['marginBalance']}")
+                print(f"Cash Bal,{acct['securitiesAccount']['currentBalances']['cashBalance']}")
+                print(f"Long Mkt Val,{acct['securitiesAccount']['currentBalances']['longMarketValue']}")
+                print("OPTION POSITIONS")
+                result = ["Options"]
+                for position in posns:
+                    if position['instrument']['assetType'] != "OPTION":
+                        continue
+                    pos_amnt = position['longQuantity'] - position['shortQuantity']
+                    result.append(f"{position['instrument']['symbol']},{pos_amnt},{position['averagePrice']}")
+                getQuote("optpos.txt", result) 
+                print("==============================")
+
 
 def getTransactions():
     with open("Data/account.json", "r") as f:
-        accountNum = f.read()
+        acct = f.read()
     f.close()
-    accountNum_json = json.loads(accountNum)
+    acct_json = json.loads(acct)
 
-    start_date = datetime.datetime.now() - relativedelta(days=3)
-    end_date = datetime.datetime.now()
+    end = datetime.datetime.today()
+    start = end - relativedelta(days=1)
 
     payload = {
-        "startDate": f"{start_date.isoformat()}Z",
-        "endDate": f"{end_date.isoformat()}Z",
+        "startDate": f"{start.isoformat()}Z",
+        "endDate": f"{end.isoformat()}Z",
         # "symbol": "AAPL", # optional
         "types": "TRADE",
     }
 
-    response = requests.get(f"{server}/accounts/{accountNum_json[0]['hashValue']}/transactions", headers=getHeaders(), params=payload) 
-    print(response)
-    transaction_json = json.loads(response.text)
-    with open("Data/xactions.json", "w") as f:
-        f.write(response.text)
-    f.close()
+    for acct in acct_json:
+        response = requests.get(f"{server}/accounts/{acct['hashValue']}/transactions", headers=getHeaders(), params=payload) 
+        print("transactions:", response)
+        xaction_json = json.loads(response.text)
+        #with open("Data/xactions.json", "w") as f:
+        #    f.write(response.text)
+        #f.close()
+
+        print("TradeDt,PosEffect,Symbol,Exp,Strike,Type,Qty,TradePx")
+        for xaction in xaction_json:
+            try:
+                xfer_items = xaction['transferItems']
+            except:
+                continue
+            else:
+                for items in xfer_items:
+                    inst = items['instrument']
+                    if inst['assetType'] == "OPTION":
+                        trd_date = xaction['tradeDate']
+                        trd_date = datetime.datetime.strptime(trd_date, '%Y-%m-%dT%H:%M:%S%z')
+                        output = datetime.datetime.strftime(trd_date, '%-m/%-d/%y %H:%M')
+                        output += f",{items['positionEffect']},"
+                        output += fromAPITickers(inst['symbol'])
+                        output += f",{items['amount']}"
+                        output += f",{items['price']}"
+                        print(output)
+
 
 if __name__ == "__main__":
     args = sys.argv[1:]
 
     if len(args) < 1:
-        print("Usage: python account_data.py <b | h | n | t | p>")
+        print("Usage: python account_data.py <b | h | n | t | u>")
         sys.exit(1)
 
-    if args[0].lower() not in ['b', 'h', 'n', 't', 'p']:
-        print("Usage: python account_data.py <b | h | n | t | p>")
+    if args[0].lower() not in ['b', 'h', 'n', 't', 'u']:
+        print("Usage: python account_data.py <b | h | n | t | u>")
         sys.exit(1)
 
     if args[0].lower() == 'b':
@@ -101,14 +149,14 @@ if __name__ == "__main__":
     if args[0].lower() == 't':
         getTransactions()
     
-    if args[0].lower() == 'p':
+    if args[0].lower() == 'u':
         getUserPrefs()
     
     if args[0].lower() == 'h':
         print("Help:")
-        print("b: Get account balances")
+        print("b: Get account balances and positions for all accounts")
         print("n: Get account numbers (do this first/once. Saved to account.json)")
-        print("t: Get transactions")
-        print("p: Get user preferences")
+        print("t: Get positions")
+        print("u: Get user preferences")
         print("h: Help")
         sys.exit(0)
