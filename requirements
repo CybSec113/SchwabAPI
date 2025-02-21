@@ -19,8 +19,10 @@ python-crontab==3.2.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 pytz==2024.2
+QuantLib==1.36
 requests==2.32.3
 requests-oauthlib==2.0.0
+scipy==1.14.1
 six==1.17.0
 tzdata==2024.2
 urllib3==2.2.3
