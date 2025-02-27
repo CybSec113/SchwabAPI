@@ -14,18 +14,18 @@ from decimal import Decimal
 # Levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
 def setup_logging(logfile="schwab_api.log"):
     logger = logging.getLogger("SchwabAPI")
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
 
     # Console Handler
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-    console_format = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    console_handler.setLevel(logging.DEBUG)
+    console_format = logging.Formatter("%(asctime)s | %(levelname)-8s | %(filename)s:%(funcName)s:%(lineno)d - %(message)s")
     console_handler.setFormatter(console_format)
 
     # File Handler with Rotation (5MB max, keep 1 backup)
     file_handler = RotatingFileHandler(logfile, maxBytes=5 * 1024 * 1024, backupCount=1)
-    file_handler.setLevel(logging.INFO)
-    file_format = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    file_handler.setLevel(logging.DEBUG)
+    file_format = logging.Formatter("%(asctime)s | %(levelname)-8s | %(filename)s:%(funcName)s:%(lineno)d - %(message)s")
     file_handler.setFormatter(file_format)
 
     # Adding Handlers
@@ -139,7 +139,7 @@ class SchwabAPI:
 
             # add mark/position data to symbols dict
             # symbols[key=symbol,mark,qty,avg_px,itmotm,days,plopen]
-            logger.info("===>>  OPTION positions.")
+            logger.info("OPTION positions.")
             print("Ticker,Exp,Strike,Type,Position,AvgPx,Mark,ITMOTM,PLOpen")
             for posn in positions:
                 if posn['instrument']['assetType'] != "OPTION":
@@ -180,7 +180,7 @@ class SchwabAPI:
                 print(result)
 
             # print underlying quotes
-            logger.info("===>>  UNDERLYING positions.")
+            logger.info("UNDERLYING positions.")
             print("Ticker,Mark")
             for underlying in underlyings:
                 print(f"{underlying},{underlyings[underlying]}")
